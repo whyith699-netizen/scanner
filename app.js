@@ -5,7 +5,15 @@
 const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwam15dWVnYWFiZHlmYmV1Y294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTUzNjQsImV4cCI6MjA4NjA3MTM2NH0.lyzrdJqj1-r28zb3G2K7RMvObqFkObB7fDDVE_xlcX8';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Check if Supabase SDK is loaded
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized');
+} catch (e) {
+    console.error('Failed to initialize Supabase:', e);
+    alert('Error: Supabase SDK not loaded. Please refresh the page.');
+}
 
 class ScannerApp {
     constructor() {
@@ -27,8 +35,10 @@ class ScannerApp {
     }
     
     async init() {
+        console.log('Initializing app...');
         this.setupEventListeners();
         await this.checkAuth();
+        console.log('App initialized');
     }
     
     async checkAuth() {
@@ -51,15 +61,30 @@ class ScannerApp {
     }
     
     async login() {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + window.location.pathname
+        console.log('Login button clicked!');
+        if (!supabase) {
+            alert('Supabase not initialized. Please refresh.');
+            return;
+        }
+        
+        try {
+            console.log('Calling signInWithOAuth...');
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            
+            console.log('OAuth response:', data, error);
+            
+            if (error) {
+                console.error('Login error:', error);
+                alert('Login gagal: ' + error.message);
             }
-        });
-        if (error) {
-            console.error('Login error:', error);
-            alert('Login gagal: ' + error.message);
+        } catch (e) {
+            console.error('Login exception:', e);
+            alert('Error: ' + e.message);
         }
     }
     
