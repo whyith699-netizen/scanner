@@ -1,17 +1,18 @@
-// Drive Scanner - Google Drive Integration
-// 100% FREE - Uses user's own Google Drive (15GB)
+// Scanner - Supabase Integration
+// File auto-delete after 7 days
 
-// TODO: Replace with your Google Cloud Console credentials
-const CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
-const API_KEY = 'YOUR_API_KEY';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+// TODO: Replace with your Supabase credentials
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
-class DriveScanner {
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+class ScannerApp {
     constructor() {
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.previewImage = document.getElementById('preview-image');
+        this.previewImage = document.getElementById('preview-img');
         this.cameraCard = document.getElementById('camera-card');
         this.previewSection = document.getElementById('preview-section');
         this.statusDiv = document.getElementById('status');
@@ -20,81 +21,51 @@ class DriveScanner {
         this.currentFilter = 'original';
         this.brightness = 0;
         this.contrast = 1;
-        this.selectedFormat = 'jpeg';
-        this.accessToken = null;
         this.user = null;
-        this.scansFolderId = null;
         
         this.init();
     }
     
     async init() {
         this.setupEventListeners();
-        await this.initGoogleAPI();
+        await this.checkAuth();
     }
     
-    async initGoogleAPI() {
-        // Load Google Identity Services
-        google.accounts.id.initialize({
-            client_id: CLIENT_ID,
-            callback: (response) => this.handleCredentialResponse(response)
-        });
-        
-        // Check for existing session
-        const savedToken = localStorage.getItem('drive_token');
-        const savedUser = localStorage.getItem('drive_user');
-        
-        if (savedToken && savedUser) {
-            this.accessToken = savedToken;
-            this.user = JSON.parse(savedUser);
-            
-            // Verify token is still valid
-            try {
-                const response = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + savedToken);
-                if (response.ok) {
-                    this.showApp();
-                    return;
-                }
-            } catch (e) {
-                // Token expired
-            }
-            
-            // Clear expired token
-            localStorage.removeItem('drive_token');
-            localStorage.removeItem('drive_user');
+    async checkAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            this.user = session.user;
+            this.showApp();
+        } else {
+            this.showLogin();
         }
         
-        this.showLogin();
-    }
-    
-    handleCredentialResponse(response) {
-        // Decode JWT to get user info
-        const payload = JSON.parse(atob(response.credential.split('.')[1]));
-        this.user = {
-            name: payload.name,
-            email: payload.email,
-            picture: payload.picture
-        };
-        
-        // Now get Drive access token
-        this.requestDriveAccess();
-    }
-    
-    requestDriveAccess() {
-        const tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: (tokenResponse) => {
-                if (tokenResponse.access_token) {
-                    this.accessToken = tokenResponse.access_token;
-                    localStorage.setItem('drive_token', this.accessToken);
-                    localStorage.setItem('drive_user', JSON.stringify(this.user));
-                    this.showApp();
-                }
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                this.user = session.user;
+                this.showApp();
+            } else {
+                this.showLogin();
             }
         });
-        
-        tokenClient.requestAccessToken();
+    }
+    
+    async login() {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin + window.location.pathname
+            }
+        });
+        if (error) {
+            console.error('Login error:', error);
+            alert('Login gagal: ' + error.message);
+        }
+    }
+    
+    async logout() {
+        await supabase.auth.signOut();
+        this.showLogin();
     }
     
     showLogin() {
@@ -106,72 +77,29 @@ class DriveScanner {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('app-section').classList.remove('hidden');
         
-        document.getElementById('user-photo').src = this.user.picture || 'https://via.placeholder.com/40';
-        document.getElementById('user-name').textContent = this.user.name || 'User';
+        const meta = this.user.user_metadata;
+        document.getElementById('user-photo').src = meta?.avatar_url || 'https://via.placeholder.com/40';
+        document.getElementById('user-name').textContent = meta?.full_name || 'User';
         document.getElementById('user-email').textContent = this.user.email;
         
         this.startCamera();
-        this.ensureScansFolderExists();
-    }
-    
-    async ensureScansFolderExists() {
-        // Check if "Scans" folder exists in Drive
-        try {
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q=name='Scans' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-                { headers: { 'Authorization': `Bearer ${this.accessToken}` } }
-            );
-            const data = await response.json();
-            
-            if (data.files && data.files.length > 0) {
-                this.scansFolderId = data.files[0].id;
-            } else {
-                // Create folder
-                const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: 'Scans',
-                        mimeType: 'application/vnd.google-apps.folder'
-                    })
-                });
-                const folder = await createResponse.json();
-                this.scansFolderId = folder.id;
-            }
-            console.log('Scans folder ID:', this.scansFolderId);
-        } catch (e) {
-            console.error('Error creating folder:', e);
-        }
-    }
-    
-    logout() {
-        this.accessToken = null;
-        this.user = null;
-        localStorage.removeItem('drive_token');
-        localStorage.removeItem('drive_user');
-        this.showLogin();
+        this.loadFiles();
+        this.updateStorageInfo();
     }
     
     async startCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+                video: { facingMode: 'environment', width: { ideal: 1920 } }
             });
             this.video.srcObject = stream;
-        } catch (err) {
-            console.error('Camera error:', err);
-            this.showStatus('Gunakan "Pilih dari Gallery" untuk memilih foto', 'info');
+        } catch (e) {
+            console.log('Camera unavailable');
         }
     }
     
     setupEventListeners() {
-        document.getElementById('login-btn').addEventListener('click', () => {
-            google.accounts.id.prompt();
-        });
-        
+        document.getElementById('login-btn').addEventListener('click', () => this.login());
         document.getElementById('logout-btn').addEventListener('click', () => this.logout());
         document.getElementById('capture-btn').addEventListener('click', () => this.capturePhoto());
         document.getElementById('file-input').addEventListener('change', (e) => this.handleFileSelect(e));
@@ -197,15 +125,7 @@ class DriveScanner {
             this.applyFilters();
         });
         
-        document.querySelectorAll('.format-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-                e.target.closest('.format-btn').classList.add('active');
-                this.selectedFormat = e.target.closest('.format-btn').dataset.format;
-            });
-        });
-        
-        document.getElementById('upload-btn').addEventListener('click', () => this.uploadToDrive());
+        document.getElementById('upload-btn').addEventListener('click', () => this.upload());
         document.getElementById('retake-btn').addEventListener('click', () => this.retake());
         document.getElementById('download-btn').addEventListener('click', () => this.download());
     }
@@ -281,19 +201,13 @@ class DriveScanner {
                     r = g = b = gray;
                     break;
                 case 'bw':
-                    const bwGray = 0.299 * r + 0.587 * g + 0.114 * b;
-                    r = g = b = bwGray > 128 ? 255 : 0;
+                    const bw = (0.299 * r + 0.587 * g + 0.114 * b) > 128 ? 255 : 0;
+                    r = g = b = bw;
                     break;
                 case 'enhance':
                     r = Math.min(255, r * 1.2 + 10);
                     g = Math.min(255, g * 1.2 + 10);
                     b = Math.min(255, b * 1.2 + 10);
-                    break;
-                case 'vivid':
-                    const avg = (r + g + b) / 3;
-                    r = Math.min(255, r + (r - avg) * 0.5);
-                    g = Math.min(255, g + (g - avg) * 0.5);
-                    b = Math.min(255, b + (b - avg) * 0.5);
                     break;
             }
             
@@ -307,83 +221,133 @@ class DriveScanner {
         }
         
         this.ctx.putImageData(imageData, 0, 0);
-        this.previewImage.src = this.canvas.toDataURL('image/jpeg', 0.95);
+        this.previewImage.src = this.canvas.toDataURL('image/jpeg', 0.9);
     }
     
-    async uploadToDrive() {
-        if (!this.accessToken) {
-            this.showStatus('Please login first', 'error');
-            return;
-        }
+    async upload() {
+        if (!this.user) return;
         
-        const uploadBtn = document.getElementById('upload-btn');
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<span class="loading"></span> Uploading...';
+        const btn = document.getElementById('upload-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Uploading...';
         
         try {
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-            const ext = this.selectedFormat === 'png' ? 'png' : 'jpg';
-            const mimeType = this.selectedFormat === 'png' ? 'image/png' : 'image/jpeg';
-            const filename = `scan_${timestamp}.${ext}`;
+            const filename = `scan_${timestamp}.jpg`;
+            const filePath = `${this.user.id}/${filename}`;
             
-            // Get blob from canvas
-            const blob = await new Promise((resolve) => {
-                this.canvas.toBlob(resolve, mimeType, 0.95);
-            });
+            const blob = await new Promise(r => this.canvas.toBlob(r, 'image/jpeg', 0.9));
             
-            // Create file metadata
-            const metadata = {
-                name: filename,
-                mimeType: mimeType,
-                parents: this.scansFolderId ? [this.scansFolderId] : []
-            };
+            // Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('scans')
+                .upload(filePath, blob, { contentType: 'image/jpeg' });
             
-            // Upload using multipart
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', blob);
+            if (uploadError) throw uploadError;
             
-            const response = await fetch(
-                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-                {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${this.accessToken}` },
-                    body: form
-                }
-            );
+            // Record in database with created_at for auto-delete
+            const { error: dbError } = await supabase
+                .from('files')
+                .insert({
+                    user_id: this.user.id,
+                    filename: filename,
+                    path: filePath,
+                    size: blob.size,
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                });
             
-            if (response.ok) {
-                const result = await response.json();
-                this.showStatus(`✅ Tersimpan di Google Drive: ${filename}`, 'success');
-                setTimeout(() => this.retake(), 2000);
-            } else {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'Upload failed');
-            }
+            if (dbError) console.error('DB error:', dbError);
+            
+            this.showStatus('✅ Tersimpan! (hapus otomatis 7 hari)', 'success');
+            this.loadFiles();
+            this.updateStorageInfo();
+            setTimeout(() => this.retake(), 2000);
             
         } catch (error) {
             console.error('Upload error:', error);
-            this.showStatus(`❌ Error: ${error.message}`, 'error');
+            this.showStatus('❌ Error: ' + error.message, 'error');
         } finally {
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = '📤 Simpan ke Google Drive';
+            btn.disabled = false;
+            btn.innerHTML = '☁️ Upload';
         }
     }
     
-    download() {
-        const mimeType = this.selectedFormat === 'png' ? 'image/png' : 'image/jpeg';
-        const ext = this.selectedFormat === 'png' ? 'png' : 'jpg';
+    async loadFiles() {
+        const list = document.getElementById('file-list');
         
-        const link = document.createElement('a');
-        link.download = `scan_${Date.now()}.${ext}`;
-        link.href = this.canvas.toDataURL(mimeType, 0.95);
-        link.click();
-        
-        this.showStatus('💾 File tersimpan ke perangkat!', 'success');
+        try {
+            const { data, error } = await supabase
+                .from('files')
+                .select('*')
+                .eq('user_id', this.user.id)
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (error) throw error;
+            
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="empty">Belum ada file</div>';
+                return;
+            }
+            
+            list.innerHTML = await Promise.all(data.map(async (file) => {
+                const { data: urlData } = supabase.storage.from('scans').getPublicUrl(file.path);
+                const expiresIn = Math.ceil((new Date(file.expires_at) - Date.now()) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="file-item">
+                        <img src="${urlData.publicUrl}" alt="Scan" onerror="this.style.display='none'">
+                        <div class="info">
+                            <div class="name">${file.filename}</div>
+                            <div class="meta">${this.formatSize(file.size)} • <span class="expires">⏳ ${expiresIn} hari lagi</span></div>
+                        </div>
+                        <a href="${urlData.publicUrl}" target="_blank" download>📥</a>
+                    </div>
+                `;
+            })).then(items => items.join(''));
+            
+        } catch (error) {
+            console.error('Load files error:', error);
+            list.innerHTML = '<div class="empty">Error loading files</div>';
+        }
     }
     
-    showStatus(message, type) {
-        this.statusDiv.textContent = message;
+    async updateStorageInfo() {
+        try {
+            const { data, error } = await supabase
+                .from('files')
+                .select('size')
+                .eq('user_id', this.user.id);
+            
+            if (error) throw error;
+            
+            const totalBytes = data.reduce((sum, f) => sum + (f.size || 0), 0);
+            const usedMB = (totalBytes / (1024 * 1024)).toFixed(1);
+            const percent = Math.min(100, (totalBytes / (100 * 1024 * 1024)) * 100);
+            
+            document.getElementById('storage-used').textContent = usedMB + ' MB';
+            document.getElementById('storage-fill').style.width = percent + '%';
+        } catch (e) {
+            console.error('Storage info error:', e);
+        }
+    }
+    
+    formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    download() {
+        const link = document.createElement('a');
+        link.download = `scan_${Date.now()}.jpg`;
+        link.href = this.canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+        this.showStatus('💾 Tersimpan ke perangkat!', 'success');
+    }
+    
+    showStatus(msg, type) {
+        this.statusDiv.textContent = msg;
         this.statusDiv.className = `status ${type}`;
         this.statusDiv.classList.remove('hidden');
     }
@@ -394,6 +358,4 @@ class DriveScanner {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    new DriveScanner();
-});
+document.addEventListener('DOMContentLoaded', () => new ScannerApp());
