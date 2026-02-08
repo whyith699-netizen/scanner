@@ -2,13 +2,13 @@
 // File auto-delete after 7 days
 
 // Supabase credentials
-const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabase.co';
+const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabaseClient.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwam15dWVnYWFiZHlmYmV1Y294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTUzNjQsImV4cCI6MjA4NjA3MTM2NH0.lyzrdJqj1-r28zb3G2K7RMvObqFkObB7fDDVE_xlcX8';
 
-// Check if Supabase SDK is loaded
-let supabase;
+// Initialize Supabase client
+let supabaseClient;
 try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase client initialized');
 } catch (e) {
     console.error('Failed to initialize Supabase:', e);
@@ -42,7 +42,7 @@ class ScannerApp {
     }
     
     async checkAuth() {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
             this.user = session.user;
             this.showApp();
@@ -50,7 +50,7 @@ class ScannerApp {
             this.showLogin();
         }
         
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
             if (session) {
                 this.user = session.user;
                 this.showApp();
@@ -69,7 +69,7 @@ class ScannerApp {
         
         try {
             console.log('Calling signInWithOAuth...');
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.origin + window.location.pathname
@@ -89,7 +89,7 @@ class ScannerApp {
     }
     
     async logout() {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         this.showLogin();
     }
     
@@ -264,7 +264,7 @@ class ScannerApp {
             const blob = await new Promise(r => this.canvas.toBlob(r, 'image/jpeg', 0.9));
             
             // Upload to Supabase Storage
-            const { error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabaseClient.storage
                 .from('scans')
                 .upload(filePath, blob, { contentType: 'image/jpeg' });
             
@@ -316,7 +316,7 @@ class ScannerApp {
             }
             
             list.innerHTML = await Promise.all(data.map(async (file) => {
-                const { data: urlData } = supabase.storage.from('scans').getPublicUrl(file.path);
+                const { data: urlData } = supabaseClient.storage.from('scans').getPublicUrl(file.path);
                 const expiresIn = Math.ceil((new Date(file.expires_at) - Date.now()) / (1000 * 60 * 60 * 24));
                 
                 return `
@@ -384,3 +384,4 @@ class ScannerApp {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => new ScannerApp());
+
