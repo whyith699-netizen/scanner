@@ -9,9 +9,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let db = null;
 
 function initSupabase() {
+    // Try new ESM approach first
+    if (window.supabaseLib && window.supabaseLib.createClient) {
+        db = window.supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase initialized via ESM!');
+        return true;
+    }
+    // Fallback to UMD
     if (window.supabase && window.supabase.createClient) {
         db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase initialized!');
+        console.log('Supabase initialized via UMD!');
         return true;
     }
     return false;

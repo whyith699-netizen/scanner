@@ -266,7 +266,16 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
-    <script src="app.js"></script>
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+        
+        // Make it globally available
+        window.supabaseLib = { createClient };
+        
+        // Load app after SDK is ready
+        const script = document.createElement('script');
+        script.src = 'app.js';
+        document.body.appendChild(script);
+    </script>
 </body>
 </html>
