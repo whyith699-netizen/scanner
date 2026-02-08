@@ -3,7 +3,7 @@
 
 // Supabase credentials
 const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_q-_SX6tg1DLbbOgbpF2kLw_BDAcU-X5';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwam15dWVnYWFiZHlmYmV1Y294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTUzNjQsImV4cCI6MjA4NjA3MTM2NH0.lyzrdJqj1-r28zb3G2K7RMvObqFkObB7fDDVE_xlcX8';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
