@@ -2,17 +2,19 @@
 // File auto-delete after 7 days
 
 // Supabase credentials
-const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabaseClient.co';
+const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwam15dWVnYWFiZHlmYmV1Y294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTUzNjQsImV4cCI6MjA4NjA3MTM2NH0.lyzrdJqj1-r28zb3G2K7RMvObqFkObB7fDDVE_xlcX8';
 
-// Initialize Supabase client
-let supabaseClient;
-try {
-    supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase client initialized');
-} catch (e) {
-    console.error('Failed to initialize Supabase:', e);
-    alert('Error: Supabase SDK not loaded. Please refresh the page.');
+// Wait for Supabase to load, then initialize
+let db = null;
+
+function initSupabase() {
+    if (window.supabase && window.supabase.createClient) {
+        db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase initialized!');
+        return true;
+    }
+    return false;
 }
 
 class ScannerApp {
@@ -36,51 +38,66 @@ class ScannerApp {
     
     async init() {
         console.log('Initializing app...');
+        
+        // Wait for Supabase SDK
+        if (!initSupabase()) {
+            console.log('Waiting for Supabase SDK...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!initSupabase()) {
+                alert('Failed to load Supabase SDK. Please refresh.');
+                return;
+            }
+        }
+        
         this.setupEventListeners();
         await this.checkAuth();
         console.log('App initialized');
     }
     
     async checkAuth() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            this.user = session.user;
-            this.showApp();
-        } else {
-            this.showLogin();
-        }
+        if (!db) return;
         
-        supabaseClient.auth.onAuthStateChange((event, session) => {
+        try {
+            const { data: { session } } = await db.auth.getSession();
             if (session) {
                 this.user = session.user;
                 this.showApp();
             } else {
                 this.showLogin();
             }
-        });
+            
+            db.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    this.user = session.user;
+                    this.showApp();
+                } else {
+                    this.showLogin();
+                }
+            });
+        } catch (e) {
+            console.error('Auth error:', e);
+            this.showLogin();
+        }
     }
     
     async login() {
-        console.log('Login button clicked!');
-        if (!supabase) {
-            alert('Supabase not initialized. Please refresh.');
+        console.log('Login clicked');
+        if (!db) {
+            alert('Supabase not loaded. Please refresh.');
             return;
         }
         
         try {
-            console.log('Calling signInWithOAuth...');
-            const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            const { data, error } = await db.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.origin + window.location.pathname
                 }
             });
             
-            console.log('OAuth response:', data, error);
-            
             if (error) {
                 console.error('Login error:', error);
-                alert('Login gagal: ' + error.message);
+                alert('Login error: ' + error.message);
             }
         } catch (e) {
             console.error('Login exception:', e);
@@ -89,7 +106,7 @@ class ScannerApp {
     }
     
     async logout() {
-        await supabaseClient.auth.signOut();
+        if (db) await db.auth.signOut();
         this.showLogin();
     }
     
@@ -102,10 +119,12 @@ class ScannerApp {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('app-section').classList.remove('hidden');
         
-        const meta = this.user.user_metadata;
-        document.getElementById('user-photo').src = meta?.avatar_url || 'https://via.placeholder.com/40';
-        document.getElementById('user-name').textContent = meta?.full_name || 'User';
-        document.getElementById('user-email').textContent = this.user.email;
+        if (this.user) {
+            const meta = this.user.user_metadata || {};
+            document.getElementById('user-photo').src = meta.avatar_url || 'https://via.placeholder.com/40';
+            document.getElementById('user-name').textContent = meta.full_name || 'User';
+            document.getElementById('user-email').textContent = this.user.email || '';
+        }
         
         this.startCamera();
         this.loadFiles();
@@ -250,7 +269,7 @@ class ScannerApp {
     }
     
     async upload() {
-        if (!this.user) return;
+        if (!this.user || !db) return;
         
         const btn = document.getElementById('upload-btn');
         btn.disabled = true;
@@ -263,15 +282,13 @@ class ScannerApp {
             
             const blob = await new Promise(r => this.canvas.toBlob(r, 'image/jpeg', 0.9));
             
-            // Upload to Supabase Storage
-            const { error: uploadError } = await supabaseClient.storage
+            const { error: uploadError } = await db.storage
                 .from('scans')
                 .upload(filePath, blob, { contentType: 'image/jpeg' });
             
             if (uploadError) throw uploadError;
             
-            // Record in database with created_at for auto-delete
-            const { error: dbError } = await supabase
+            const { error: dbError } = await db
                 .from('files')
                 .insert({
                     user_id: this.user.id,
@@ -298,10 +315,12 @@ class ScannerApp {
     }
     
     async loadFiles() {
+        if (!db || !this.user) return;
+        
         const list = document.getElementById('file-list');
         
         try {
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('files')
                 .select('*')
                 .eq('user_id', this.user.id)
@@ -315,8 +334,8 @@ class ScannerApp {
                 return;
             }
             
-            list.innerHTML = await Promise.all(data.map(async (file) => {
-                const { data: urlData } = supabaseClient.storage.from('scans').getPublicUrl(file.path);
+            list.innerHTML = data.map(file => {
+                const { data: urlData } = db.storage.from('scans').getPublicUrl(file.path);
                 const expiresIn = Math.ceil((new Date(file.expires_at) - Date.now()) / (1000 * 60 * 60 * 24));
                 
                 return `
@@ -329,7 +348,7 @@ class ScannerApp {
                         <a href="${urlData.publicUrl}" target="_blank" download>📥</a>
                     </div>
                 `;
-            })).then(items => items.join(''));
+            }).join('');
             
         } catch (error) {
             console.error('Load files error:', error);
@@ -338,8 +357,10 @@ class ScannerApp {
     }
     
     async updateStorageInfo() {
+        if (!db || !this.user) return;
+        
         try {
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('files')
                 .select('size')
                 .eq('user_id', this.user.id);
@@ -382,6 +403,5 @@ class ScannerApp {
     }
 }
 
-// Initialize
+// Initialize when DOM ready
 document.addEventListener('DOMContentLoaded', () => new ScannerApp());
-
