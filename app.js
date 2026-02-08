@@ -1,9 +1,9 @@
 // Scanner - Supabase Integration
 // File auto-delete after 7 days
 
-// TODO: Replace with your Supabase credentials
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+// Supabase credentials
+const SUPABASE_URL = 'https://bpjmyuegaabdyfbeucox.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_q-_SX6tg1DLbbOgbpF2kLw_BDAcU-X5';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
