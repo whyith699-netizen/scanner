@@ -1,0 +1,421 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3ECF8E" />
+    <title>📄 Scanner — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: "Inter", sans-serif;
+        background: #0f0f0f;
+        min-height: 100vh; color: #fff;
+      }
+      .hidden { display: none !important; }
+
+      /* ============ LOGIN ============ */
+      #login-section {
+        display: flex; align-items: center; justify-content: center;
+        min-height: 100vh; padding: 40px;
+      }
+      .login-card {
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px; padding: 48px; text-align: center;
+        max-width: 420px; width: 100%;
+      }
+      .login-card .logo { font-size: 56px; margin-bottom: 16px; }
+      .login-card h1 { font-size: 28px; color: #3ecf8e; margin-bottom: 8px; }
+      .login-card p { color: #888; margin-bottom: 32px; font-size: 15px; }
+      .btn-google {
+        width: 100%; padding: 16px 24px; border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 14px; background: #fff; color: #333;
+        font-size: 15px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        transition: all 0.3s;
+      }
+      .btn-google:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+
+      /* ============ DASHBOARD ============ */
+      #dashboard {
+        max-width: 1280px; margin: 0 auto; padding: 32px 40px;
+      }
+
+      /* Header */
+      .dash-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 40px;
+      }
+      .dash-header .brand { display: flex; align-items: center; gap: 14px; }
+      .dash-header .brand-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        background: linear-gradient(135deg, #3ecf8e 0%, #2dd4bf 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px;
+      }
+      .dash-header .brand h1 { font-size: 24px; font-weight: 700; }
+      .dash-header .brand p { font-size: 13px; color: #666; margin-top: 2px; }
+
+      .user-pill {
+        display: flex; align-items: center; gap: 12px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        padding: 6px 16px 6px 6px; border-radius: 50px;
+        transition: all 0.2s;
+      }
+      .user-pill:hover { border-color: rgba(255,255,255,0.15); }
+      .user-pill img { width: 36px; height: 36px; border-radius: 50%; }
+      .user-pill .name { font-size: 14px; font-weight: 500; }
+      .user-pill .logout {
+        color: #666; font-size: 12px; cursor: pointer; margin-left: 8px;
+        transition: color 0.2s;
+      }
+      .user-pill .logout:hover { color: #f87171; }
+
+      /* Stats Grid */
+      .stats {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 16px; margin-bottom: 32px;
+      }
+      @media (max-width: 900px) {
+        .stats { grid-template-columns: repeat(2, 1fr); }
+      }
+      .stat-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px; padding: 22px;
+        transition: all 0.3s ease;
+        position: relative; overflow: hidden;
+      }
+      .stat-card::before {
+        content: ""; position: absolute; inset: 0;
+        background: radial-gradient(circle at top left, var(--glow) 0%, transparent 70%);
+        opacity: 0; transition: opacity 0.3s;
+      }
+      .stat-card:hover::before { opacity: 1; }
+      .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255,255,255,0.12);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      }
+      .stat-card .icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; margin-bottom: 14px; position: relative;
+      }
+      .stat-card .value { font-size: 32px; font-weight: 800; position: relative; }
+      .stat-card .label { font-size: 13px; color: #666; margin-top: 4px; position: relative; }
+
+      .stat-card.green { --glow: rgba(62,207,142,0.08); }
+      .stat-card.green .icon { background: rgba(62,207,142,0.12); }
+      .stat-card.blue { --glow: rgba(59,130,246,0.08); }
+      .stat-card.blue .icon { background: rgba(59,130,246,0.12); }
+      .stat-card.amber { --glow: rgba(251,191,36,0.08); }
+      .stat-card.amber .icon { background: rgba(251,191,36,0.12); }
+      .stat-card.purple { --glow: rgba(168,85,247,0.08); }
+      .stat-card.purple .icon { background: rgba(168,85,247,0.12); }
+
+      /* Storage */
+      .storage-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px; padding: 22px; margin-bottom: 32px;
+      }
+      .storage-card .top {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+      }
+      .storage-card .top h3 { font-size: 15px; font-weight: 600; }
+      .storage-card .top span { color: #3ecf8e; font-weight: 700; font-size: 14px; }
+      .storage-track {
+        height: 10px; background: #1a1a1a; border-radius: 5px; overflow: hidden;
+      }
+      .storage-fill {
+        height: 100%; border-radius: 5px;
+        background: linear-gradient(90deg, #3ecf8e, #2dd4bf, #3b82f6);
+        transition: width 0.6s ease;
+      }
+
+      /* Files Header */
+      .files-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px;
+      }
+      .files-header h2 { font-size: 20px; font-weight: 700; }
+      .files-header .controls { display: flex; gap: 8px; align-items: center; }
+
+      .view-toggle {
+        display: flex; background: #1a1a1a; border-radius: 10px; padding: 3px;
+      }
+      .view-toggle button {
+        background: none; border: none; color: #666;
+        padding: 8px 14px; border-radius: 8px; cursor: pointer;
+        font-size: 15px; transition: all 0.2s;
+      }
+      .view-toggle button.active { background: #2a2a2a; color: #fff; }
+
+      .refresh-btn {
+        background: #1a1a1a; border: none; color: #888;
+        padding: 8px 14px; border-radius: 10px; cursor: pointer;
+        font-size: 14px; transition: all 0.2s;
+      }
+      .refresh-btn:hover { background: #2a2a2a; color: #fff; }
+
+      /* Grid View */
+      .files-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+      }
+      .file-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px; overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      .file-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(62,207,142,0.25);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      }
+      .file-card .thumb {
+        width: 100%; aspect-ratio: 4/3; object-fit: cover;
+        background: #1a1a1a; display: block; cursor: pointer;
+      }
+      .file-card .body { padding: 16px; }
+      .file-card .fname {
+        font-size: 13px; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 8px;
+      }
+      .file-card .fmeta {
+        display: flex; justify-content: space-between; font-size: 11px; color: #666;
+      }
+      .file-card .fmeta .exp { color: #fbbf24; }
+      .file-card .actions {
+        display: flex; gap: 6px; padding: 0 16px 16px;
+      }
+      .file-card .actions button {
+        flex: 1; padding: 9px; border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px; background: rgba(255,255,255,0.04);
+        color: #ccc; font-size: 12px; font-weight: 500; cursor: pointer;
+        transition: all 0.2s;
+      }
+      .file-card .actions button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+      .file-card .actions .del:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+      /* List View */
+      .files-list { display: none; }
+      .file-row {
+        display: flex; align-items: center; gap: 16px;
+        padding: 14px 18px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px; margin-bottom: 8px;
+        transition: all 0.2s; cursor: pointer;
+      }
+      .file-row:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(62,207,142,0.2);
+      }
+      .file-row img {
+        width: 52px; height: 52px; border-radius: 10px; object-fit: cover;
+        background: #1a1a1a;
+      }
+      .file-row .info { flex: 1; }
+      .file-row .info .name { font-size: 14px; font-weight: 500; }
+      .file-row .info .meta { font-size: 12px; color: #666; margin-top: 3px; }
+      .file-row .info .meta .exp { color: #fbbf24; }
+      .file-row .row-actions { display: flex; gap: 8px; }
+      .file-row .row-actions button {
+        padding: 7px 14px; border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px; background: rgba(255,255,255,0.04);
+        color: #ccc; font-size: 12px; cursor: pointer; transition: all 0.2s;
+      }
+      .file-row .row-actions button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+      .file-row .row-actions .del:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+      /* Modal */
+      .modal-bg {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(12px); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      }
+      .modal-bg.show { opacity: 1; pointer-events: all; }
+      .modal-box { position: relative; max-width: 90vw; max-height: 90vh; }
+      .modal-box img {
+        max-width: 100%; max-height: 82vh; border-radius: 16px;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      }
+      .modal-close {
+        position: absolute; top: -14px; right: -14px;
+        width: 40px; height: 40px; border-radius: 50%;
+        background: #222; border: 1px solid #444; color: #fff;
+        font-size: 20px; cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .modal-close:hover { background: #dc2626; border-color: #dc2626; }
+      .modal-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 14px; padding: 14px 18px;
+        background: rgba(255,255,255,0.06); border-radius: 12px;
+      }
+      .modal-bar .mname { font-size: 14px; font-weight: 500; }
+      .modal-bar .mactions { display: flex; gap: 8px; }
+      .modal-bar .mactions button {
+        padding: 10px 18px; border-radius: 10px; border: none;
+        font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      }
+      .btn-dl { background: linear-gradient(135deg, #3ecf8e, #2dd4bf); color: #1c1c1c; }
+      .btn-dl:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(62,207,142,0.3); }
+      .btn-rm { background: #222; color: #f87171; }
+      .btn-rm:hover { background: #dc2626; color: #fff; }
+
+      /* Empty */
+      .empty-state {
+        text-align: center; padding: 80px 40px; color: #444;
+      }
+      .empty-state .icon { font-size: 72px; margin-bottom: 20px; opacity: 0.4; }
+      .empty-state h3 { font-size: 22px; color: #666; margin-bottom: 8px; }
+      .empty-state p { font-size: 14px; }
+      .empty-state a { color: #3ecf8e; }
+
+      /* Back link */
+      .back-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: #666; text-decoration: none; font-size: 13px;
+        margin-bottom: 24px; transition: color 0.2s;
+      }
+      .back-link:hover { color: #3ecf8e; }
+
+      /* Animations */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .anim { animation: fadeUp 0.4s ease forwards; }
+
+      /* Loading Spinner */
+      .spinner {
+        display: flex; align-items: center; justify-content: center;
+        padding: 60px; color: #666; font-size: 14px; gap: 10px;
+      }
+      .spinner::before {
+        content: ""; width: 20px; height: 20px;
+        border: 2px solid #333; border-top-color: #3ecf8e;
+        border-radius: 50%; animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        #dashboard { padding: 20px 16px; }
+        .dash-header { flex-direction: column; gap: 16px; align-items: flex-start; }
+        .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .files-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Login -->
+    <div id="login-section">
+      <div class="login-card">
+        <div class="logo">📄</div>
+        <h1>Scanner Dashboard</h1>
+        <p>Login untuk melihat file yang di-upload dari HP</p>
+        <button class="btn-google" id="login-btn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" />
+          Login dengan Google
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+      <a href="../" class="back-link">← Kembali ke Scanner</a>
+
+      <div class="dash-header">
+        <div class="brand">
+          <div class="brand-icon">📄</div>
+          <div>
+            <h1>Dashboard</h1>
+            <p>File yang di-upload dari HP</p>
+          </div>
+        </div>
+        <div class="user-pill">
+          <img id="user-photo" src="" alt="" />
+          <span class="name" id="user-name">User</span>
+          <span class="logout" id="logout-btn">Logout</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card green anim">
+          <div class="icon">📄</div>
+          <div class="value" id="s-total">0</div>
+          <div class="label">Total File</div>
+        </div>
+        <div class="stat-card blue anim" style="animation-delay:.05s">
+          <div class="icon">💾</div>
+          <div class="value" id="s-storage">0 MB</div>
+          <div class="label">Storage Terpakai</div>
+        </div>
+        <div class="stat-card amber anim" style="animation-delay:.1s">
+          <div class="icon">⏳</div>
+          <div class="value" id="s-expiring">0</div>
+          <div class="label">Expire &lt; 2 Hari</div>
+        </div>
+        <div class="stat-card purple anim" style="animation-delay:.15s">
+          <div class="icon">📅</div>
+          <div class="value" id="s-today">0</div>
+          <div class="label">Upload Hari Ini</div>
+        </div>
+      </div>
+
+      <div class="storage-card anim" style="animation-delay:.2s">
+        <div class="top">
+          <h3>📦 Pemakaian Storage</h3>
+          <span id="storage-label">0 MB / 100 MB</span>
+        </div>
+        <div class="storage-track">
+          <div class="storage-fill" id="storage-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="files-header anim" style="animation-delay:.25s">
+        <h2>📋 Semua File</h2>
+        <div class="controls">
+          <button class="refresh-btn" id="refresh-btn">🔄 Refresh</button>
+          <div class="view-toggle">
+            <button class="active" id="btn-grid">🔲</button>
+            <button id="btn-list">☰</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="files-grid" id="grid"></div>
+      <div class="files-list" id="list"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-bg" id="modal">
+      <div class="modal-box">
+        <button class="modal-close" id="modal-x">✕</button>
+        <img id="modal-img" src="" alt="Preview" />
+        <div class="modal-bar">
+          <span class="mname" id="modal-name"></span>
+          <div class="mactions">
+            <button class="btn-dl" id="modal-dl">📥 Download</button>
+            <button class="btn-rm" id="modal-rm">🗑️ Hapus</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>
