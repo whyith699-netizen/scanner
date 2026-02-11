@@ -2,514 +2,567 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#3ECF8E" />
     <title>📄 Scanner</title>
     <link rel="manifest" href="manifest.json" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         font-family: "Inter", sans-serif;
         background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%);
-        min-height: 100vh;
-        color: #fff;
+        min-height: 100vh; color: #fff;
       }
-      .container {
-        max-width: 500px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      header {
-        text-align: center;
-        padding: 20px 0;
-      }
-      header h1 {
-        font-size: 28px;
-        color: #3ecf8e;
-      }
-      header p {
-        opacity: 0.7;
-        margin-top: 4px;
-      }
+      .hidden { display: none !important; }
 
-      .card {
-        background: #2a2a2a;
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 16px;
-        border: 1px solid #3a3a3a;
-      }
-      .card-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #888;
-        margin-bottom: 12px;
-        text-transform: uppercase;
-      }
-
-      .hidden {
-        display: none !important;
-      }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: #333;
-        border-radius: 12px;
-        margin-bottom: 16px;
-      }
-      .user-info img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-      }
-      .user-info .name {
-        flex: 1;
-      }
-      .user-info .email {
-        font-size: 12px;
-        color: #888;
-      }
-
-      .storage-info {
-        background: #333;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 16px;
-        text-align: center;
-      }
-      .storage-bar {
-        height: 8px;
-        background: #444;
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 8px 0;
-      }
-      .storage-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #3ecf8e, #2dd4bf);
-        border-radius: 4px;
-        transition: width 0.3s;
-      }
-      .storage-text {
-        font-size: 12px;
-        color: #888;
-      }
-      .storage-text span {
-        color: #3ecf8e;
-        font-weight: 600;
-      }
-
-      .warning-badge {
-        background: rgba(251, 191, 36, 0.2);
-        color: #fbbf24;
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        text-align: center;
-        margin-bottom: 16px;
-      }
-
-      #camera-section {
-        position: relative;
-        background: #000;
-        border-radius: 16px;
-        overflow: hidden;
-        aspect-ratio: 4/3;
-      }
-      #video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      #canvas {
-        display: none;
-      }
-      #preview-img {
-        width: 100%;
-        border-radius: 12px;
-        margin-bottom: 16px;
-      }
-
+      /* ===================== SHARED STYLES ===================== */
       .btn {
-        width: 100%;
-        padding: 16px;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.2s;
+        padding: 16px; border: none; border-radius: 12px;
+        font-size: 16px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; transition: all 0.2s;
       }
       .btn-primary {
         background: linear-gradient(135deg, #3ecf8e 0%, #2dd4bf 100%);
         color: #1c1c1c;
       }
-      .btn-primary:hover {
-        transform: translateY(-2px);
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(62, 207, 142, 0.3); }
+      .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+      .btn-secondary { background: #333; color: #fff; }
+      .btn-secondary:hover { background: #444; }
+      .btn-google { background: #fff; color: #333; border: 1px solid #444; width: 100%; }
+      .btn-danger { background: #dc2626; color: #fff; width: auto; padding: 8px 16px; font-size: 12px; }
+
+      .card {
+        background: #2a2a2a; border-radius: 16px;
+        padding: 24px; margin-bottom: 16px; border: 1px solid #3a3a3a;
       }
-      .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-      }
-      .btn-secondary {
-        background: #333;
-        color: #fff;
-      }
-      .btn-secondary:hover {
-        background: #444;
-      }
-      .btn-google {
-        background: #fff;
-        color: #333;
-        border: 1px solid #444;
-      }
-      .btn-danger {
-        background: #dc2626;
-        color: #fff;
-        width: auto;
-        padding: 8px 16px;
-        font-size: 12px;
+      .card-title {
+        font-size: 12px; font-weight: 600; color: #888;
+        margin-bottom: 12px; text-transform: uppercase;
       }
 
+      .user-info {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px; background: #333; border-radius: 12px; margin-bottom: 16px;
+      }
+      .user-info img { width: 40px; height: 40px; border-radius: 50%; }
+      .user-info .name { flex: 1; }
+      .user-info .email { font-size: 12px; color: #888; }
+
+      .loading {
+        display: inline-block; width: 20px; height: 20px;
+        border: 2px solid rgba(0,0,0,0.2); border-top-color: #1c1c1c;
+        border-radius: 50%; animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ===================== LOGIN ===================== */
+      #login-section {
+        max-width: 500px; margin: 0 auto; padding: 20px;
+      }
+      #login-section header { text-align: center; padding: 60px 0 20px; }
+      #login-section header h1 { font-size: 48px; color: #3ecf8e; margin-bottom: 8px; }
+      #login-section header p { opacity: 0.7; font-size: 18px; }
+      .login-card {
+        background: #2a2a2a; border-radius: 20px; padding: 40px;
+        border: 1px solid #3a3a3a; text-align: center;
+      }
+      .login-card h2 { margin-bottom: 8px; color: #3ecf8e; }
+      .login-card p { color: #888; margin-bottom: 24px; }
+
+      /* ===================== MOBILE SCANNER ===================== */
+      #app-section {
+        max-width: 500px; margin: 0 auto; padding: 20px;
+      }
+      #app-section > header { text-align: center; padding: 20px 0; }
+      #app-section > header h1 { font-size: 28px; color: #3ecf8e; }
+      #app-section > header p { opacity: 0.7; margin-top: 4px; }
+
+      .storage-info {
+        background: #333; border-radius: 12px; padding: 12px;
+        margin-bottom: 16px; text-align: center;
+      }
+      .storage-bar {
+        height: 8px; background: #444; border-radius: 4px;
+        overflow: hidden; margin: 8px 0;
+      }
+      .storage-bar-fill {
+        height: 100%; background: linear-gradient(90deg, #3ecf8e, #2dd4bf);
+        border-radius: 4px; transition: width 0.3s;
+      }
+      .storage-text { font-size: 12px; color: #888; }
+      .storage-text span { color: #3ecf8e; font-weight: 600; }
+
+      .warning-badge {
+        background: rgba(251, 191, 36, 0.2); color: #fbbf24;
+        padding: 8px 12px; border-radius: 8px;
+        font-size: 12px; text-align: center; margin-bottom: 16px;
+      }
+
+      #camera-section {
+        position: relative; background: #000; border-radius: 16px;
+        overflow: hidden; aspect-ratio: 4/3;
+      }
+      #video { width: 100%; height: 100%; object-fit: cover; }
+      #canvas { display: none; }
+      #preview-img { width: 100%; border-radius: 12px; margin-bottom: 16px; }
+
       .btn-capture {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: #fff;
-        border: 4px solid rgba(62, 207, 142, 0.3);
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        cursor: pointer;
+        width: 72px; height: 72px; border-radius: 50%;
+        background: #fff; border: 4px solid rgba(62, 207, 142, 0.3);
+        position: absolute; bottom: 20px; left: 50%;
+        transform: translateX(-50%); cursor: pointer;
       }
       .btn-capture::after {
-        content: "";
-        width: 56px;
-        height: 56px;
+        content: ""; width: 56px; height: 56px;
         background: linear-gradient(135deg, #3ecf8e 0%, #2dd4bf 100%);
-        border-radius: 50%;
-        position: absolute;
-        top: 50%;
-        left: 50%;
+        border-radius: 50%; position: absolute; top: 50%; left: 50%;
         transform: translate(-50%, -50%);
       }
 
-      .filters {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 4px 0;
-        margin-bottom: 16px;
-      }
+      .filters { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin-bottom: 16px; }
       .filter-btn {
-        padding: 10px 16px;
-        border: 1px solid #444;
-        border-radius: 20px;
-        background: #333;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.2s;
+        padding: 10px 16px; border: 1px solid #444; border-radius: 20px;
+        background: #333; color: #fff; font-size: 13px; font-weight: 500;
+        cursor: pointer; white-space: nowrap; transition: all 0.2s;
       }
-      .filter-btn.active {
-        border-color: #3ecf8e;
-        background: rgba(62, 207, 142, 0.2);
-        color: #3ecf8e;
-      }
+      .filter-btn.active { border-color: #3ecf8e; background: rgba(62,207,142,0.2); color: #3ecf8e; }
 
-      .slider-group {
-        margin-bottom: 16px;
-      }
-      .slider-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-      .slider-label span:last-child {
-        color: #3ecf8e;
-      }
+      .slider-group { margin-bottom: 16px; }
+      .slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+      .slider-label span:last-child { color: #3ecf8e; }
       input[type="range"] {
-        width: 100%;
-        height: 6px;
-        border-radius: 3px;
-        background: #444;
-        outline: none;
-        -webkit-appearance: none;
+        width: 100%; height: 6px; border-radius: 3px;
+        background: #444; outline: none; -webkit-appearance: none; appearance: none;
       }
       input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #3ecf8e;
-        cursor: pointer;
-      }
-
-      .format-selector {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-      }
-      .format-btn {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid #444;
-        border-radius: 12px;
-        background: #333;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        text-align: center;
-        transition: all 0.2s;
-      }
-      .format-btn.active {
-        border-color: #3ecf8e;
-        background: rgba(62, 207, 142, 0.2);
-      }
-      .format-btn .icon {
-        font-size: 24px;
-        display: block;
-        margin-bottom: 4px;
+        -webkit-appearance: none; appearance: none;
+        width: 20px; height: 20px; border-radius: 50%;
+        background: #3ecf8e; cursor: pointer;
       }
 
       .status {
-        text-align: center;
-        padding: 12px;
-        border-radius: 12px;
-        font-size: 14px;
-        margin-top: 12px;
+        text-align: center; padding: 12px; border-radius: 12px;
+        font-size: 14px; margin-top: 12px;
       }
-      .status.success {
-        background: rgba(62, 207, 142, 0.2);
-        color: #3ecf8e;
-      }
-      .status.error {
-        background: rgba(220, 38, 38, 0.2);
-        color: #f87171;
-      }
+      .status.success { background: rgba(62,207,142,0.2); color: #3ecf8e; }
+      .status.error { background: rgba(220,38,38,0.2); color: #f87171; }
 
-      .file-input-wrapper {
-        margin-top: 12px;
-      }
-      .file-input-wrapper input {
-        display: none;
-      }
-      .action-row {
-        display: flex;
-        gap: 12px;
-        margin-top: 12px;
-      }
-      .action-row .btn {
-        flex: 1;
-      }
+      .file-input-wrapper { margin-top: 12px; }
+      .file-input-wrapper input { display: none; }
+      .action-row { display: flex; gap: 12px; margin-top: 12px; }
+      .action-row .btn { flex: 1; }
 
-      .file-list {
-        max-height: 250px;
-        overflow-y: auto;
-      }
+      .file-list { max-height: 250px; overflow-y: auto; }
       .file-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: #333;
-        border-radius: 12px;
-        margin-bottom: 8px;
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px; background: #333; border-radius: 12px; margin-bottom: 8px;
       }
-      .file-item img {
-        width: 48px;
-        height: 48px;
-        object-fit: cover;
-        border-radius: 8px;
-      }
-      .file-item .info {
-        flex: 1;
-      }
-      .file-item .name {
-        font-size: 14px;
-        font-weight: 500;
-      }
-      .file-item .meta {
-        font-size: 11px;
-        color: #888;
-      }
-      .file-item .expires {
-        color: #fbbf24;
-      }
-      .file-item a {
-        color: #3ecf8e;
-        text-decoration: none;
-        font-size: 20px;
+      .file-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+      .file-item .info { flex: 1; }
+      .file-item .name { font-size: 14px; font-weight: 500; }
+      .file-item .meta { font-size: 11px; color: #888; }
+      .file-item .expires { color: #fbbf24; }
+      .file-item a { color: #3ecf8e; text-decoration: none; font-size: 20px; }
+
+      .empty { text-align: center; padding: 40px; color: #666; }
+
+      /* ===================== DESKTOP DASHBOARD ===================== */
+      #desktop-section {
+        max-width: 1200px; margin: 0 auto; padding: 32px 40px;
       }
 
-      .empty {
-        text-align: center;
-        padding: 40px;
+      .desktop-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 32px;
+      }
+      .desktop-header .logo { display: flex; align-items: center; gap: 12px; }
+      .desktop-header .logo h1 { font-size: 32px; color: #3ecf8e; }
+      .desktop-header .logo p { color: #888; font-size: 14px; }
+      .desktop-header .user-bar {
+        display: flex; align-items: center; gap: 16px;
+        background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+        padding: 8px 16px 8px 8px; border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .desktop-header .user-bar img { width: 36px; height: 36px; border-radius: 50%; }
+      .desktop-header .user-bar .name { font-size: 14px; font-weight: 500; }
+      .desktop-header .user-bar .logout-link {
+        color: #888; font-size: 12px; cursor: pointer;
+        transition: color 0.2s;
+      }
+      .desktop-header .user-bar .logout-link:hover { color: #f87171; }
+
+      /* Stats Cards */
+      .stats-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 16px; margin-bottom: 32px;
+      }
+      .stat-card {
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px; padding: 20px;
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(62,207,142,0.3);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      }
+      .stat-card .stat-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; margin-bottom: 12px;
+      }
+      .stat-card .stat-icon.green { background: rgba(62,207,142,0.15); }
+      .stat-card .stat-icon.blue { background: rgba(59,130,246,0.15); }
+      .stat-card .stat-icon.amber { background: rgba(251,191,36,0.15); }
+      .stat-card .stat-icon.purple { background: rgba(168,85,247,0.15); }
+      .stat-card .stat-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+      .stat-card .stat-label { font-size: 13px; color: #888; }
+
+      /* Desktop Progress Bar */
+      .desktop-storage {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px; padding: 20px; margin-bottom: 32px;
+      }
+      .desktop-storage .storage-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+      }
+      .desktop-storage .storage-header h3 { font-size: 16px; font-weight: 600; }
+      .desktop-storage .storage-header span { color: #3ecf8e; font-weight: 600; font-size: 14px; }
+      .desktop-storage .storage-track {
+        height: 10px; background: #333; border-radius: 5px; overflow: hidden;
+      }
+      .desktop-storage .storage-track-fill {
+        height: 100%; border-radius: 5px; transition: width 0.5s ease;
+        background: linear-gradient(90deg, #3ecf8e, #2dd4bf, #3b82f6);
+      }
+
+      /* File Section */
+      .files-section-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px;
+      }
+      .files-section-header h2 { font-size: 20px; font-weight: 700; }
+      .files-section-header .view-toggle {
+        display: flex; gap: 4px; background: #333; border-radius: 8px; padding: 4px;
+      }
+      .view-toggle button {
+        background: none; border: none; color: #888;
+        padding: 8px 12px; border-radius: 6px; cursor: pointer;
+        font-size: 16px; transition: all 0.2s;
+      }
+      .view-toggle button.active { background: #444; color: #fff; }
+
+      /* Grid View */
+      .files-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+      }
+      .file-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px; overflow: hidden;
+        transition: all 0.3s ease; cursor: pointer;
+      }
+      .file-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(62,207,142,0.3);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      }
+      .file-card .thumb {
+        width: 100%; aspect-ratio: 4/3; object-fit: cover;
+        background: #222; display: block;
+      }
+      .file-card .file-card-info { padding: 14px; }
+      .file-card .file-card-name {
+        font-size: 13px; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 6px;
+      }
+      .file-card .file-card-meta {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 11px; color: #888;
+      }
+      .file-card .file-card-meta .expiry { color: #fbbf24; }
+      .file-card .file-card-actions {
+        display: flex; gap: 6px; padding: 0 14px 14px;
+      }
+      .file-card .file-card-actions button {
+        flex: 1; padding: 8px; border: 1px solid #444;
+        border-radius: 8px; background: #333; color: #fff;
+        font-size: 12px; cursor: pointer; transition: all 0.2s;
+      }
+      .file-card .file-card-actions button:hover { background: #444; }
+      .file-card .file-card-actions .btn-delete:hover { background: #dc2626; border-color: #dc2626; }
+
+      /* List View */
+      .files-list { display: none; }
+      .files-list.active { display: block; }
+      .files-grid.active { display: grid; }
+      .file-row {
+        display: flex; align-items: center; gap: 16px;
+        padding: 14px 16px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px; margin-bottom: 8px;
+        transition: all 0.2s; cursor: pointer;
+      }
+      .file-row:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(62,207,142,0.2);
+      }
+      .file-row img {
+        width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+      }
+      .file-row .file-row-info { flex: 1; }
+      .file-row .file-row-name { font-size: 14px; font-weight: 500; }
+      .file-row .file-row-meta { font-size: 12px; color: #888; margin-top: 2px; }
+      .file-row .file-row-actions { display: flex; gap: 8px; }
+      .file-row .file-row-actions button {
+        padding: 6px 12px; border: 1px solid #444; border-radius: 8px;
+        background: #333; color: #fff; font-size: 12px;
+        cursor: pointer; transition: all 0.2s;
+      }
+      .file-row .file-row-actions button:hover { background: #444; }
+      .file-row .file-row-actions .btn-delete:hover { background: #dc2626; border-color: #dc2626; }
+
+      /* Image Preview Modal */
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      }
+      .modal-overlay.active { opacity: 1; pointer-events: all; }
+      .modal-content {
+        position: relative; max-width: 90vw; max-height: 90vh;
+      }
+      .modal-content img {
+        max-width: 100%; max-height: 85vh; border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      }
+      .modal-close {
+        position: absolute; top: -12px; right: -12px;
+        width: 36px; height: 36px; border-radius: 50%;
+        background: #333; border: 1px solid #555; color: #fff;
+        font-size: 18px; cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .modal-close:hover { background: #dc2626; border-color: #dc2626; }
+      .modal-info {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 12px; padding: 12px 16px;
+        background: rgba(255,255,255,0.08); border-radius: 10px;
+      }
+      .modal-info .modal-filename { font-size: 14px; font-weight: 500; }
+      .modal-info .modal-actions { display: flex; gap: 8px; }
+      .modal-info .modal-actions button {
+        padding: 8px 16px; border-radius: 8px; border: none;
+        font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      }
+      .modal-download-btn { background: linear-gradient(135deg, #3ecf8e, #2dd4bf); color: #1c1c1c; }
+      .modal-download-btn:hover { transform: translateY(-2px); }
+      .modal-delete-btn { background: #333; color: #f87171; }
+      .modal-delete-btn:hover { background: #dc2626; color: #fff; }
+
+      /* Empty State Desktop */
+      .desktop-empty {
+        text-align: center; padding: 80px 40px;
         color: #666;
       }
+      .desktop-empty .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+      .desktop-empty h3 { font-size: 20px; color: #888; margin-bottom: 8px; }
+      .desktop-empty p { font-size: 14px; }
 
-      .loading {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(0, 0, 0, 0.2);
-        border-top-color: #1c1c1c;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+      /* Animations */
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
+      .animate-in { animation: fadeInUp 0.4s ease forwards; }
     </style>
   </head>
   <body>
-    <div class="container">
+    <!-- ===================== LOGIN ===================== -->
+    <div id="login-section">
       <header>
         <h1>📄 Scanner</h1>
         <p>Scan & simpan ke cloud (auto-delete 7 hari)</p>
       </header>
+      <div class="login-card">
+        <h2>Selamat Datang!</h2>
+        <p>Login untuk mulai</p>
+        <button class="btn btn-google" id="login-btn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" />
+          Login dengan Google
+        </button>
+      </div>
+    </div>
 
-      <!-- Login -->
-      <div class="card" id="login-section">
-        <div style="text-align: center; padding: 20px 0">
-          <h2 style="margin-bottom: 8px; color: #3ecf8e">Selamat Datang!</h2>
-          <p style="color: #888; margin-bottom: 24px">Login untuk mulai scan</p>
-          <button class="btn btn-google" id="login-btn">
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              width="20"
-            />
-            Login dengan Google
-          </button>
+    <!-- ===================== MOBILE SCANNER ===================== -->
+    <div id="app-section" class="hidden">
+      <header>
+        <h1>📄 Scanner</h1>
+        <p>Scan & simpan ke cloud</p>
+      </header>
+
+      <!-- User & Storage -->
+      <div class="card">
+        <div class="user-info">
+          <img id="user-photo" src="" alt="" />
+          <div class="name">
+            <div id="user-name">User</div>
+            <div class="email" id="user-email">email@example.com</div>
+          </div>
+          <button class="btn btn-danger" id="logout-btn">Logout</button>
+        </div>
+        <div class="storage-info">
+          <div class="storage-text">
+            Storage: <span id="storage-used">0 MB</span> / 100 MB
+          </div>
+          <div class="storage-bar">
+            <div class="storage-bar-fill" id="storage-fill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="warning-badge">⏳ File otomatis dihapus setelah 7 hari</div>
+      </div>
+
+      <!-- Camera -->
+      <div class="card" id="camera-card">
+        <div id="camera-section">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas"></canvas>
+          <button class="btn-capture" id="capture-btn"></button>
+        </div>
+        <div class="file-input-wrapper">
+          <label class="btn btn-secondary" style="margin-top: 12px">
+            📁 Pilih dari Gallery
+            <input type="file" id="file-input" accept="image/*" capture="environment" />
+          </label>
         </div>
       </div>
 
-      <!-- Main App -->
-      <div id="app-section" class="hidden">
-        <!-- User & Storage Info -->
-        <div class="card">
-          <div class="user-info">
-            <img id="user-photo" src="" alt="" />
-            <div class="name">
-              <div id="user-name">User</div>
-              <div class="email" id="user-email">email@example.com</div>
-            </div>
-            <button class="btn btn-danger" id="logout-btn">Logout</button>
+      <!-- Preview -->
+      <div class="card hidden" id="preview-section">
+        <img id="preview-img" src="" alt="Preview" />
+        <div class="card-title">Filter</div>
+        <div class="filters">
+          <button class="filter-btn active" data-filter="original">Original</button>
+          <button class="filter-btn" data-filter="enhance">✨ Auto</button>
+          <button class="filter-btn" data-filter="grayscale">Grayscale</button>
+          <button class="filter-btn" data-filter="bw">B&W</button>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label"><span>☀️ Brightness</span><span id="brightness-value">0</span></div>
+          <input type="range" id="brightness" min="-100" max="100" value="0" />
+        </div>
+        <div class="slider-group">
+          <div class="slider-label"><span>🎚️ Contrast</span><span id="contrast-value">1.0</span></div>
+          <input type="range" id="contrast" min="50" max="200" value="100" />
+        </div>
+        <button class="btn btn-primary" id="upload-btn">☁️ Upload</button>
+        <div class="action-row">
+          <button class="btn btn-secondary" id="retake-btn">🔄 Ulang</button>
+          <button class="btn btn-secondary" id="download-btn">💾 Simpan</button>
+        </div>
+        <div class="status hidden" id="status"></div>
+      </div>
+
+      <!-- Recent Files -->
+      <div class="card">
+        <div class="card-title">📋 File Tersimpan</div>
+        <div class="file-list" id="file-list">
+          <div class="empty">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== DESKTOP DASHBOARD ===================== -->
+    <div id="desktop-section" class="hidden">
+
+      <!-- Header Bar -->
+      <div class="desktop-header">
+        <div class="logo">
+          <div>
+            <h1>📄 Scanner</h1>
+            <p>Cloud Document Dashboard</p>
           </div>
-          <div class="storage-info">
-            <div class="storage-text">
-              Storage: <span id="storage-used">0 MB</span> / 100 MB
-            </div>
-            <div class="storage-bar">
-              <div
-                class="storage-bar-fill"
-                id="storage-fill"
-                style="width: 0%"
-              ></div>
-            </div>
+        </div>
+        <div class="user-bar">
+          <img id="desktop-user-photo" src="" alt="" />
+          <div>
+            <div class="name" id="desktop-user-name">User</div>
+            <span class="logout-link" id="desktop-logout-btn">Logout</span>
           </div>
-          <div class="warning-badge">
-            ⏳ File otomatis dihapus setelah 7 hari
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card animate-in">
+          <div class="stat-icon green">📄</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total File</div>
+        </div>
+        <div class="stat-card animate-in" style="animation-delay: 0.05s">
+          <div class="stat-icon blue">💾</div>
+          <div class="stat-value" id="stat-storage">0 MB</div>
+          <div class="stat-label">Storage Terpakai</div>
+        </div>
+        <div class="stat-card animate-in" style="animation-delay: 0.1s">
+          <div class="stat-icon amber">⏳</div>
+          <div class="stat-value" id="stat-expiring">0</div>
+          <div class="stat-label">Expire &lt; 2 Hari</div>
+        </div>
+        <div class="stat-card animate-in" style="animation-delay: 0.15s">
+          <div class="stat-icon purple">📅</div>
+          <div class="stat-value" id="stat-today">0</div>
+          <div class="stat-label">Upload Hari Ini</div>
+        </div>
+      </div>
+
+      <!-- Storage Bar -->
+      <div class="desktop-storage animate-in" style="animation-delay: 0.2s">
+        <div class="storage-header">
+          <h3>📦 Pemakaian Storage</h3>
+          <span id="desktop-storage-text">0 MB / 100 MB</span>
+        </div>
+        <div class="storage-track">
+          <div class="storage-track-fill" id="desktop-storage-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Files Section -->
+      <div class="animate-in" style="animation-delay: 0.25s">
+        <div class="files-section-header">
+          <h2>📋 Semua File</h2>
+          <div class="view-toggle">
+            <button class="active" id="view-grid-btn" title="Grid">🔲</button>
+            <button id="view-list-btn" title="List">📋</button>
           </div>
         </div>
 
-        <!-- Camera -->
-        <div class="card" id="camera-card">
-          <div id="camera-section">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-            <button class="btn-capture" id="capture-btn"></button>
-          </div>
-          <div class="file-input-wrapper">
-            <label class="btn btn-secondary" style="margin-top: 12px">
-              📁 Pilih dari Gallery
-              <input
-                type="file"
-                id="file-input"
-                accept="image/*"
-                capture="environment"
-              />
-            </label>
-          </div>
-        </div>
+        <div class="files-grid active" id="desktop-files-grid"></div>
+        <div class="files-list" id="desktop-files-list"></div>
+      </div>
+    </div>
 
-        <!-- Preview -->
-        <div class="card hidden" id="preview-section">
-          <img id="preview-img" src="" alt="Preview" />
-
-          <div class="card-title">Filter</div>
-          <div class="filters">
-            <button class="filter-btn active" data-filter="original">
-              Original
-            </button>
-            <button class="filter-btn" data-filter="enhance">✨ Auto</button>
-            <button class="filter-btn" data-filter="grayscale">
-              Grayscale
-            </button>
-            <button class="filter-btn" data-filter="bw">B&W</button>
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label">
-              <span>☀️ Brightness</span><span id="brightness-value">0</span>
-            </div>
-            <input
-              type="range"
-              id="brightness"
-              min="-100"
-              max="100"
-              value="0"
-            />
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label">
-              <span>🎚️ Contrast</span><span id="contrast-value">1.0</span>
-            </div>
-            <input type="range" id="contrast" min="50" max="200" value="100" />
-          </div>
-
-          <button class="btn btn-primary" id="upload-btn">☁️ Upload</button>
-          <div class="action-row">
-            <button class="btn btn-secondary" id="retake-btn">🔄 Ulang</button>
-            <button class="btn btn-secondary" id="download-btn">
-              💾 Simpan
-            </button>
-          </div>
-          <div class="status hidden" id="status"></div>
-        </div>
-
-        <!-- Recent Files -->
-        <div class="card">
-          <div class="card-title">📋 File Tersimpan</div>
-          <div class="file-list" id="file-list">
-            <div class="empty">Loading...</div>
+    <!-- Image Modal -->
+    <div class="modal-overlay" id="image-modal">
+      <div class="modal-content">
+        <button class="modal-close" id="modal-close-btn">✕</button>
+        <img id="modal-image" src="" alt="Preview" />
+        <div class="modal-info">
+          <span class="modal-filename" id="modal-filename"></span>
+          <div class="modal-actions">
+            <button class="modal-download-btn" id="modal-download-btn">📥 Download</button>
+            <button class="modal-delete-btn" id="modal-delete-btn">🗑️ Hapus</button>
           </div>
         </div>
       </div>
